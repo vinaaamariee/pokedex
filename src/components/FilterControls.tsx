@@ -1,4 +1,5 @@
-import { Filter } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
+import { TYPE_BADGE_CLASSES } from '../constants/pokemonTypeStyles';
 
 interface FilterControlsProps {
   selectedType: string;
@@ -27,50 +28,37 @@ const POKEMON_TYPES = [
   'fairy',
 ];
 
-const TYPE_COLORS: { [key: string]: string } = {
-  normal: 'bg-gray-400',
-  fire: 'bg-orange-500',
-  water: 'bg-blue-500',
-  electric: 'bg-yellow-400',
-  grass: 'bg-green-500',
-  ice: 'bg-cyan-400',
-  fighting: 'bg-red-700',
-  poison: 'bg-purple-500',
-  ground: 'bg-yellow-700',
-  flying: 'bg-indigo-300',
-  psychic: 'bg-pink-500',
-  bug: 'bg-lime-500',
-  rock: 'bg-yellow-800',
-  ghost: 'bg-purple-700',
-  dragon: 'bg-indigo-600',
-  dark: 'bg-gray-800',
-  steel: 'bg-gray-500',
-  fairy: 'bg-pink-300',
-  all: 'bg-gray-600',
-};
-
 export default function FilterControls({ selectedType, onTypeChange }: FilterControlsProps) {
   return (
     <div className="w-full">
-      <div className="flex items-center gap-2 mb-3">
-        <Filter className="w-5 h-5 text-gray-600" />
-        <h3 className="font-semibold text-gray-700">Filter by Type</h3>
+      <div className="mb-4 flex items-center justify-center gap-2 sm:justify-start">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/15 text-violet-700 dark:bg-cyan-500/15 dark:text-cyan-300">
+          <SlidersHorizontal className="h-4 w-4" />
+        </div>
+        <h3 className="font-semibold text-ink-800 dark:text-ink-100">Filter by type</h3>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {POKEMON_TYPES.map((type) => (
-          <button
-            key={type}
-            onClick={() => onTypeChange(type)}
-            className={`
-              px-4 py-2 rounded-full text-white font-medium text-sm capitalize
-              transition-all transform hover:scale-105
-              ${TYPE_COLORS[type] || 'bg-gray-400'}
-              ${selectedType === type ? 'ring-4 ring-offset-2 ring-blue-400 shadow-lg' : 'opacity-70 hover:opacity-100'}
-            `}
-          >
-            {type}
-          </button>
-        ))}
+      <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
+        {POKEMON_TYPES.map((type) => {
+          const selected = selectedType === type;
+          return (
+            <button
+              key={type}
+              type="button"
+              onClick={() => onTypeChange(type)}
+              className={`
+                rounded-full px-3.5 py-1.5 text-xs font-semibold capitalize transition-all duration-200
+                ${TYPE_BADGE_CLASSES[type] || TYPE_BADGE_CLASSES.normal}
+                ${
+                  selected
+                    ? 'ring-2 ring-violet-500 ring-offset-2 ring-offset-white scale-[1.02] dark:ring-cyan-400 dark:ring-offset-ink-950'
+                    : 'opacity-80 hover:opacity-100 hover:scale-[1.02]'
+                }
+              `}
+            >
+              {type}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

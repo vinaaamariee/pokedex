@@ -7,19 +7,17 @@ interface SearchBarProps {
 
 export default function SearchBar({ searchTerm, onSearchChange }: SearchBarProps) {
   return (
-    <div className="relative w-full max-w-md">
-      <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-        <Search className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+    <div className="relative w-full max-w-lg">
+      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+        <Search className="h-5 w-5 text-violet-500/70 dark:text-cyan-400/70" />
       </div>
       <input
-        type="text"
+        type="search"
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
-        placeholder="Search Pokémon by name..."
-        className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg
-          bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100
-          placeholder-gray-400 dark:placeholder-gray-500
-          focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+        placeholder="Search by name…"
+        autoComplete="off"
+        className="w-full rounded-2xl border border-white/80 bg-white/80 py-3.5 pl-12 pr-5 text-ink-900 shadow-glass backdrop-blur-md placeholder:text-ink-400 focus:border-violet-400/80 focus:outline-none focus:ring-2 focus:ring-violet-500/30 dark:border-white/10 dark:bg-ink-900/70 dark:text-ink-100 dark:placeholder:text-ink-500 dark:focus:border-violet-500/50 dark:focus:ring-violet-400/25"
       />
     </div>
   );

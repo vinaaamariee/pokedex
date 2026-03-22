@@ -1,11 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, LayoutGrid, Camera } from 'lucide-react';
 import { Pokemon } from './types/pokemon';
 import { fetchPokemonList } from './services/pokemonApi';
 import SearchBar from './components/SearchBar';
 import FilterControls from './components/FilterControls';
 import PokemonList from './components/PokemonList';
 import PokemonDetail from './components/PokemonDetail';
+import PhotoEditor from './components/PhotoEditor';
+
+type AppView = 'pokedex' | 'studio';
 
 function App() {
   const [allPokemon, setAllPokemon] = useState<Pokemon[]>([]);
@@ -16,6 +19,7 @@ function App() {
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('darkMode') === 'true';
   });
+  const [view, setView] = useState<AppView>('pokedex');
 
   useEffect(() => {
     const root = document.documentElement;
@@ -72,46 +76,107 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-red-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
-      <div className="container mx-auto px-4 py-8">
-        <header className="text-center mb-8 relative">
-          {/* Dark Mode Toggle — top-right corner */}
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            aria-label="Toggle dark mode"
-            className="absolute right-0 top-0 p-2 rounded-full text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
-          >
-            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
-
-          <h1 className="text-5xl font-bold text-gray-800 dark:text-white mb-2 tracking-tight">
-            Pokédex
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 text-lg">
-            Explore and discover all 151 original Pokémon
-          </p>
-        </header>
-
-        <div className="mb-8 space-y-6">
-          <div className="flex justify-center">
-            <SearchBar searchTerm={searchTerm} onSearchChange={handleSearchChange} />
-          </div>
-
-          <FilterControls selectedType={selectedType} onTypeChange={handleTypeChange} />
-        </div>
-
-        <div className="mb-4 text-center text-gray-600 dark:text-gray-400">
-          <span className="font-semibold">{filteredPokemon.length}</span> Pokémon found
-        </div>
-
-        <PokemonList
-          pokemon={filteredPokemon}
-          onSelectPokemon={handleSelectPokemon}
-          selectedPokemon={selectedPokemon}
-          loading={loading}
+    <div className="min-h-screen bg-mesh-light dark:bg-mesh-dark transition-colors duration-500">
+      <div className="relative min-h-screen">
+        <div
+          className="pointer-events-none fixed inset-0 opacity-[0.35] dark:opacity-[0.2]"
+          aria-hidden
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E")`,
+          }}
         />
 
-        <PokemonDetail pokemon={selectedPokemon} onClose={handleCloseDetail} />
+        <div className="relative container mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+          <header className="mb-10 text-center">
+            <div className="relative mx-auto mb-8 max-w-3xl">
+              <button
+                type="button"
+                onClick={() => setDarkMode(!darkMode)}
+                aria-label="Toggle dark mode"
+                className="absolute -right-1 top-0 z-10 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/60 bg-white/70 text-ink-600 shadow-glass backdrop-blur-md transition hover:border-violet-300/80 hover:bg-white hover:text-violet-700 dark:border-white/10 dark:bg-ink-900/60 dark:text-ink-200 dark:hover:border-violet-500/40 dark:hover:bg-ink-800 dark:hover:text-violet-300"
+              >
+                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </button>
+
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-violet-600/90 dark:text-cyan-300/90">
+                Kanto archive
+              </p>
+              <h1 className="font-display text-5xl font-extrabold tracking-tight text-ink-950 dark:text-white sm:text-6xl">
+                <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 bg-clip-text text-transparent dark:from-violet-300 dark:via-fuchsia-300 dark:to-cyan-300">
+                  Pokédex
+                </span>
+              </h1>
+              <p className="mx-auto mt-4 max-w-xl text-balance text-base text-ink-600 dark:text-ink-300 sm:text-lg">
+                {view === 'pokedex'
+                  ? 'Browse all 151 originals — crisp art, types, and stats in one calm place.'
+                  : 'Drop in a photo, layer official artwork stickers, and export a share-ready PNG.'}
+              </p>
+            </div>
+
+            <nav
+              className="mx-auto inline-flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/70 bg-white/60 p-1.5 shadow-glass backdrop-blur-xl dark:border-white/10 dark:bg-ink-900/50"
+              aria-label="Main navigation"
+            >
+              <button
+                type="button"
+                onClick={() => setView('pokedex')}
+                className={`inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-300 ${
+                  view === 'pokedex'
+                    ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/35'
+                    : 'text-ink-600 hover:bg-white/80 hover:text-ink-900 dark:text-ink-300 dark:hover:bg-ink-800/80 dark:hover:text-white'
+                }`}
+              >
+                <LayoutGrid className="h-4 w-4 opacity-90" />
+                Pokédex
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('studio')}
+                className={`inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-300 ${
+                  view === 'studio'
+                    ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/35'
+                    : 'text-ink-600 hover:bg-white/80 hover:text-ink-900 dark:text-ink-300 dark:hover:bg-ink-800/80 dark:hover:text-white'
+                }`}
+              >
+                <Camera className="h-4 w-4 opacity-90" />
+                Photo Studio
+              </button>
+            </nav>
+          </header>
+
+          {view === 'pokedex' && (
+            <>
+              <div className="mb-10 space-y-8">
+                <div className="flex justify-center">
+                  <SearchBar searchTerm={searchTerm} onSearchChange={handleSearchChange} />
+                </div>
+
+                <FilterControls selectedType={selectedType} onTypeChange={handleTypeChange} />
+              </div>
+
+              <div className="mb-6 text-center">
+                <span className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/70 px-4 py-1.5 text-sm font-medium text-ink-700 shadow-sm backdrop-blur dark:border-violet-500/20 dark:bg-ink-900/60 dark:text-ink-200">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                  <span className="font-semibold tabular-nums text-violet-700 dark:text-violet-300">
+                    {filteredPokemon.length}
+                  </span>
+                  <span className="text-ink-500 dark:text-ink-400">Pokémon match</span>
+                </span>
+              </div>
+
+              <PokemonList
+                pokemon={filteredPokemon}
+                onSelectPokemon={handleSelectPokemon}
+                selectedPokemon={selectedPokemon}
+                loading={loading}
+              />
+
+              <PokemonDetail pokemon={selectedPokemon} onClose={handleCloseDetail} />
+            </>
+          )}
+
+          {view === 'studio' && <PhotoEditor pokemon={allPokemon} loading={loading} />}
+        </div>
       </div>
     </div>
   );
