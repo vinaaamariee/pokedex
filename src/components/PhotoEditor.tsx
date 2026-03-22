@@ -5,6 +5,8 @@ import { openImageFromDisk, savePngDataUrl } from '../lib/imageBridge';
 
 /** Only downscale if the longest edge exceeds this (avoids huge canvases / memory issues). */
 const MAX_CANVAS_DIMENSION = 8192;
+/** Fits the preview in the window while keeping the image’s aspect ratio. */
+const PREVIEW_MAX_HEIGHT = 'min(85vh, calc(100vh - 14rem))';
 const DEFAULT_STICKER_WIDTH = 140;
 
 export interface PlacedSticker {
@@ -385,9 +387,7 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
             {canvasSize && (
               <div
                 className="flex w-full min-h-0 flex-1 justify-center overflow-auto"
-                style={{
-                  maxHeight: 'min(85vh, calc(100vh - 14rem))',
-                }}
+                style={{ maxHeight: PREVIEW_MAX_HEIGHT }}
               >
                 <canvas
                   ref={canvasRef}
@@ -397,7 +397,7 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
                     width: 'auto',
                     height: 'auto',
                     maxWidth: '100%',
-                    maxHeight: 'min(85vh, calc(100vh - 14rem))',
+                    maxHeight: PREVIEW_MAX_HEIGHT,
                   }}
                   width={canvasSize.w}
                   height={canvasSize.h}
