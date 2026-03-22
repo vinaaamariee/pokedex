@@ -5,8 +5,11 @@ import { openImageFromDisk, savePngDataUrl } from '../lib/imageBridge';
 
 /** Only downscale if the longest edge exceeds this (avoids huge canvases / memory issues). */
 const MAX_CANVAS_DIMENSION = 8192;
-/** Fits the preview in the window while keeping the image’s aspect ratio. */
-const PREVIEW_MAX_HEIGHT = 'min(85vh, calc(100vh - 14rem))';
+/**
+ * Max block size for the preview (any orientation). Uses dvh so portrait phones
+ * and notched layouts behave; subtracts space for chrome.
+ */
+const PREVIEW_MAX_BLOCK = 'min(85dvh, calc(100dvh - 14rem))';
 const DEFAULT_STICKER_WIDTH = 140;
 
 export interface PlacedSticker {
@@ -387,25 +390,32 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
             {canvasSize && (
               <div
                 className="flex w-full min-h-0 flex-1 justify-center overflow-auto"
-                style={{ maxHeight: PREVIEW_MAX_HEIGHT }}
+                style={{ maxHeight: PREVIEW_MAX_BLOCK }}
               >
-                <canvas
-                  ref={canvasRef}
-                  className="block h-auto w-auto max-h-full max-w-full cursor-grab rounded-2xl bg-white shadow-glass-lg active:cursor-grabbing"
-                  style={{
-                    touchAction: 'none',
-                    width: 'auto',
-                    height: 'auto',
-                    maxWidth: '100%',
-                    maxHeight: PREVIEW_MAX_HEIGHT,
-                  }}
-                  width={canvasSize.w}
-                  height={canvasSize.h}
-                  onPointerDown={onPointerDown}
-                  onPointerMove={onPointerMove}
-                  onPointerUp={onPointerUp}
-                  onPointerCancel={onPointerUp}
-                />
+                {/* Sized with CSS “contain” math so portrait, landscape, square, and panoramic all fit. */}
+                <div
+                  className="mx-auto w-full min-w-0 max-w-full"
+                  style={
+                    {
+                      '--preview-max': PREVIEW_MAX_BLOCK,
+                      aspectRatio: `${canvasSize.w} / ${canvasSize.h}`,
+                      maxHeight: 'var(--preview-max)',
+                      width: `min(100%, calc(var(--preview-max) * ${canvasSize.w} / ${canvasSize.h}))`,
+                    } as React.CSSProperties
+                  }
+                >
+                  <canvas
+                    ref={canvasRef}
+                    className="block h-full w-full cursor-grab rounded-2xl bg-white shadow-glass-lg active:cursor-grabbing"
+                    style={{ touchAction: 'none' }}
+                    width={canvasSize.w}
+                    height={canvasSize.h}
+                    onPointerDown={onPointerDown}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onPointerCancel={onPointerUp}
+                  />
+                </div>
               </div>
             )}
           </div>
