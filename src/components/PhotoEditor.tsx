@@ -6,9 +6,14 @@ import { openImageFromDisk, savePngDataUrl } from '../lib/imageBridge';
 /** Only downscale if the longest edge exceeds this (avoids huge canvases / memory issues). */
 const MAX_CANVAS_DIMENSION = 8192;
 const DEFAULT_STICKER_WIDTH = 140;
-/** Resize handle size in canvas pixels (hit area matches drawing). */
-const RESIZE_HANDLE_PX = 28;
+/** Max resize handle size in canvas pixels (shrinks on small stickers). */
+const RESIZE_HANDLE_MAX = 28;
 const MIN_STICKER_WIDTH = 24;
+
+function resizeHandleSize(s: PlacedSticker): number {
+  const m = Math.min(s.width, s.height);
+  return Math.max(14, Math.min(RESIZE_HANDLE_MAX, Math.floor(m * 0.42)));
+}
 
 export interface PlacedSticker {
   id: string;
@@ -57,8 +62,9 @@ function hitTestStickers(
 }
 
 function hitTestResizeHandle(s: PlacedSticker, x: number, y: number): boolean {
-  const hx0 = s.x + s.width - RESIZE_HANDLE_PX;
-  const hy0 = s.y + s.height - RESIZE_HANDLE_PX;
+  const h = resizeHandleSize(s);
+  const hx0 = s.x + s.width - h;
+  const hy0 = s.y + s.height - h;
   return x >= hx0 && x <= s.x + s.width && y >= hy0 && y <= s.y + s.height;
 }
 
@@ -260,14 +266,15 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
         ctx.setLineDash([8, 4]);
         ctx.strokeRect(s.x - 2, s.y - 2, s.width + 4, s.height + 4);
         ctx.setLineDash([]);
-        const hx = s.x + s.width - RESIZE_HANDLE_PX;
-        const hy = s.y + s.height - RESIZE_HANDLE_PX;
+        const hs = resizeHandleSize(s);
+        const hx = s.x + s.width - hs;
+        const hy = s.y + s.height - hs;
         ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
         ctx.strokeStyle = 'rgba(139, 92, 246, 0.95)';
         ctx.lineWidth = 2;
         ctx.setLineDash([]);
-        ctx.fillRect(hx, hy, RESIZE_HANDLE_PX, RESIZE_HANDLE_PX);
-        ctx.strokeRect(hx, hy, RESIZE_HANDLE_PX, RESIZE_HANDLE_PX);
+        ctx.fillRect(hx, hy, hs, hs);
+        ctx.strokeRect(hx, hy, hs, hs);
       }
     }
   }, [bgReady, canvasSize, stickers, selectedId]);
