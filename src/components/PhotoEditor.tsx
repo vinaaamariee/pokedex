@@ -3,7 +3,8 @@ import { Download, ImagePlus, Loader2, Trash2, Layers } from 'lucide-react';
 import { Pokemon } from '../types/pokemon';
 import { openImageFromDisk, savePngDataUrl } from '../lib/imageBridge';
 
-const MAX_CANVAS_WIDTH = 1200;
+/** Only downscale if the longest edge exceeds this (avoids huge canvases / memory issues). */
+const MAX_CANVAS_DIMENSION = 8192;
 const DEFAULT_STICKER_WIDTH = 140;
 
 export interface PlacedSticker {
@@ -92,11 +93,13 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
       const nh = img.naturalHeight;
       let cw = nw;
       let ch = nh;
-      if (nw > MAX_CANVAS_WIDTH) {
-        cw = MAX_CANVAS_WIDTH;
-        ch = (nh / nw) * MAX_CANVAS_WIDTH;
+      const maxEdge = Math.max(nw, nh);
+      if (maxEdge > MAX_CANVAS_DIMENSION) {
+        const scale = MAX_CANVAS_DIMENSION / maxEdge;
+        cw = Math.round(nw * scale);
+        ch = Math.round(nh * scale);
       }
-      setCanvasSize({ w: Math.round(cw), h: Math.round(ch) });
+      setCanvasSize({ w: cw, h: ch });
       bgImageRef.current = img;
       setBgReady(true);
     };
@@ -327,7 +330,7 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
           </div>
         </aside>
 
-        <div className="min-w-0 flex-1 space-y-5">
+        <div className="min-h-0 min-w-0 flex-1 space-y-5">
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
@@ -367,25 +370,43 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
             )}
           </div>
 
-          <div className="flex min-h-[320px] items-start justify-center rounded-3xl border border-white/60 bg-white/50 p-6 shadow-inner backdrop-blur dark:border-white/10 dark:bg-ink-950/40">
+          <div
+            className={`
+              flex w-full min-w-0 flex-1 flex-col rounded-3xl border border-white/60 bg-white/50 shadow-inner backdrop-blur dark:border-white/10 dark:bg-ink-950/40
+              ${canvasSize ? 'min-h-0 p-2 sm:p-3' : 'min-h-[min(320px,50vh)] items-center justify-center p-6'}
+            `}
+          >
             {!canvasSize && (
-              <p className="max-w-md text-balance px-4 py-12 text-center text-sm leading-relaxed text-ink-600 dark:text-ink-400">
+              <p className="max-w-md text-balance px-4 text-center text-sm leading-relaxed text-ink-600 dark:text-ink-400">
                 Use <strong className="text-ink-800 dark:text-ink-200">Import image</strong> to load a photo.
                 In the desktop app, Electron opens a file dialog and reads the file in the main process.
               </p>
             )}
             {canvasSize && (
-              <canvas
-                ref={canvasRef}
-                className="max-h-[70vh] max-w-full cursor-grab rounded-2xl bg-white shadow-glass-lg active:cursor-grabbing"
-                style={{ touchAction: 'none' }}
-                width={canvasSize.w}
-                height={canvasSize.h}
-                onPointerDown={onPointerDown}
-                onPointerMove={onPointerMove}
-                onPointerUp={onPointerUp}
-                onPointerCancel={onPointerUp}
-              />
+              <div
+                className="flex w-full min-h-0 flex-1 justify-center overflow-auto"
+                style={{
+                  maxHeight: 'min(85vh, calc(100vh - 14rem))',
+                }}
+              >
+                <canvas
+                  ref={canvasRef}
+                  className="block h-auto w-auto max-h-full max-w-full cursor-grab rounded-2xl bg-white shadow-glass-lg active:cursor-grabbing"
+                  style={{
+                    touchAction: 'none',
+                    width: 'auto',
+                    height: 'auto',
+                    maxWidth: '100%',
+                    maxHeight: 'min(85vh, calc(100vh - 14rem))',
+                  }}
+                  width={canvasSize.w}
+                  height={canvasSize.h}
+                  onPointerDown={onPointerDown}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerUp}
+                  onPointerCancel={onPointerUp}
+                />
+              </div>
             )}
           </div>
         </div>
