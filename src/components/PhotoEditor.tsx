@@ -6,6 +6,9 @@ import { openImageFromDisk, savePngDataUrl } from '../lib/imageBridge';
 /** Only downscale if the longest edge exceeds this (avoids huge canvases / memory issues). */
 const MAX_CANVAS_DIMENSION = 8192;
 const DEFAULT_STICKER_WIDTH = 140;
+/** Resize handle size in canvas pixels (hit area matches drawing). */
+const RESIZE_HANDLE_PX = 28;
+const MIN_STICKER_WIDTH = 24;
 
 export interface PlacedSticker {
   id: string;
@@ -16,6 +19,8 @@ export interface PlacedSticker {
   y: number;
   width: number;
   height: number;
+  /** height / width — kept when resizing */
+  aspect: number;
 }
 
 function getStickerImageUrl(pokemon: Pokemon): string {
@@ -51,6 +56,42 @@ function hitTestStickers(
   return null;
 }
 
+function hitTestResizeHandle(s: PlacedSticker, x: number, y: number): boolean {
+  const hx0 = s.x + s.width - RESIZE_HANDLE_PX;
+  const hy0 = s.y + s.height - RESIZE_HANDLE_PX;
+  return x >= hx0 && x <= s.x + s.width && y >= hy0 && y <= s.y + s.height;
+}
+
+function clampStickerSize(
+  s: PlacedSticker,
+  newWidth: number,
+  canvasW: number,
+  canvasH: number
+): { width: number; height: number } {
+  const aspect = s.aspect;
+  const maxW = Math.max(0, canvasW - s.x);
+  const maxH = Math.max(0, canvasH - s.y);
+  let w = Math.max(MIN_STICKER_WIDTH, newWidth);
+  let h = w * aspect;
+  if (w > maxW) {
+    w = maxW;
+    h = w * aspect;
+  }
+  if (h > maxH) {
+    h = maxH;
+    w = h / aspect;
+  }
+  w = Math.max(MIN_STICKER_WIDTH, Math.min(w, maxW));
+  h = w * aspect;
+  if (h > maxH) {
+    h = maxH;
+    w = h / aspect;
+  }
+  w = Math.max(MIN_STICKER_WIDTH, Math.min(w, maxW));
+  h = w * aspect;
+  return { width: w, height: h };
+}
+
 interface PhotoEditorProps {
   pokemon: Pokemon[];
   loading: boolean;
@@ -73,6 +114,7 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
     offsetX: number;
     offsetY: number;
   } | null>(null);
+  const [resizeId, setResizeId] = useState<string | null>(null);
 
   const filteredPokemon = useMemo(() => {
     const q = stickerQuery.trim().toLowerCase();
@@ -136,7 +178,8 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
         );
         const maxW = cap;
         const w = Math.min(maxW, img.naturalWidth);
-        const h = (img.naturalHeight / img.naturalWidth) * w;
+        const aspect = img.naturalHeight / img.naturalWidth;
+        const h = w * aspect;
         const id = crypto.randomUUID();
         const x = Math.max(0, (canvasSize.w - w) / 2);
         const y = Math.max(0, (canvasSize.h - h) / 2);
@@ -153,6 +196,7 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
             y,
             width: w,
             height: h,
+            aspect,
           },
         ]);
         setSelectedId(id);
@@ -216,6 +260,14 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
         ctx.setLineDash([8, 4]);
         ctx.strokeRect(s.x - 2, s.y - 2, s.width + 4, s.height + 4);
         ctx.setLineDash([]);
+        const hx = s.x + s.width - RESIZE_HANDLE_PX;
+        const hy = s.y + s.height - RESIZE_HANDLE_PX;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.strokeStyle = 'rgba(139, 92, 246, 0.95)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+        ctx.fillRect(hx, hy, RESIZE_HANDLE_PX, RESIZE_HANDLE_PX);
+        ctx.strokeRect(hx, hy, RESIZE_HANDLE_PX, RESIZE_HANDLE_PX);
       }
     }
   }, [bgReady, canvasSize, stickers, selectedId]);
@@ -240,10 +292,22 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
     if (!canvas || !canvasSize) return;
 
     const { x, y } = getCanvasCoords(canvas, e.clientX, e.clientY);
+
+    if (selectedId) {
+      const sel = stickers.find((s) => s.id === selectedId);
+      if (sel && hitTestResizeHandle(sel, x, y)) {
+        setResizeId(sel.id);
+        setDrag(null);
+        canvas.setPointerCapture(e.pointerId);
+        return;
+      }
+    }
+
     const hit = hitTestStickers(stickers, x, y);
 
     if (hit) {
       setSelectedId(hit.id);
+      setResizeId(null);
       setDrag({
         id: hit.id,
         offsetX: x - hit.x,
@@ -253,26 +317,56 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
     } else {
       setSelectedId(null);
       setDrag(null);
+      setResizeId(null);
     }
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!drag || !canvasSize) return;
-
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !canvasSize) return;
 
     const { x, y } = getCanvasCoords(canvas, e.clientX, e.clientY);
-    let nx = x - drag.offsetX;
-    let ny = y - drag.offsetY;
 
-    setStickers((prev) => {
-      const s = prev.find((p) => p.id === drag.id);
-      if (!s) return prev;
-      nx = Math.max(0, Math.min(nx, canvasSize.w - s.width));
-      ny = Math.max(0, Math.min(ny, canvasSize.h - s.height));
-      return prev.map((p) => (p.id === drag.id ? { ...p, x: nx, y: ny } : p));
-    });
+    if (resizeId) {
+      canvas.style.cursor = 'nwse-resize';
+      setStickers((prev) =>
+        prev.map((s) => {
+          if (s.id !== resizeId) return s;
+          const newWidth = x - s.x;
+          const { width, height } = clampStickerSize(s, newWidth, canvasSize.w, canvasSize.h);
+          return { ...s, width, height };
+        })
+      );
+      return;
+    }
+
+    if (drag) {
+      canvas.style.cursor = 'grabbing';
+      let nx = x - drag.offsetX;
+      let ny = y - drag.offsetY;
+
+      setStickers((prev) => {
+        const s = prev.find((p) => p.id === drag.id);
+        if (!s) return prev;
+        nx = Math.max(0, Math.min(nx, canvasSize.w - s.width));
+        ny = Math.max(0, Math.min(ny, canvasSize.h - s.height));
+        return prev.map((p) => (p.id === drag.id ? { ...p, x: nx, y: ny } : p));
+      });
+      return;
+    }
+
+    if (selectedId) {
+      const sel = stickers.find((s) => s.id === selectedId);
+      if (sel && hitTestResizeHandle(sel, x, y)) {
+        canvas.style.cursor = 'nwse-resize';
+        return;
+      }
+    }
+    if (hitTestStickers(stickers, x, y)) {
+      canvas.style.cursor = 'grab';
+    } else {
+      canvas.style.cursor = 'default';
+    }
   };
 
   const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -281,6 +375,7 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
       canvas.releasePointerCapture(e.pointerId);
     }
     setDrag(null);
+    setResizeId(null);
   };
 
   return (
@@ -297,9 +392,9 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
             </h2>
             <p className="mb-4 text-sm leading-relaxed text-ink-600 dark:text-ink-400">
               <span className="hidden sm:inline">
-                Import a photo first, then add Pokémon. Drag stickers on the canvas to position them.
+                Import a photo, then add Pokémon. Drag to move; drag the corner handle to resize.
               </span>
-              <span className="sm:hidden">Import a photo, then tap a Pokémon. Drag stickers to move.</span>
+              <span className="sm:hidden">Import a photo, tap a Pokémon, then drag to move or use the corner to resize.</span>
             </p>
             <input
               type="search"
@@ -410,7 +505,7 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
                 >
                   <canvas
                     ref={canvasRef}
-                    className="block h-full w-full cursor-grab rounded-2xl bg-white shadow-glass-lg active:cursor-grabbing"
+                    className="block h-full w-full touch-none rounded-2xl bg-white shadow-glass-lg"
                     style={{ touchAction: 'none' }}
                     width={canvasSize.w}
                     height={canvasSize.h}
@@ -418,6 +513,11 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
                     onPointerMove={onPointerMove}
                     onPointerUp={onPointerUp}
                     onPointerCancel={onPointerUp}
+                    onPointerLeave={(e) => {
+                      if (e.buttons === 0) {
+                        e.currentTarget.style.cursor = 'default';
+                      }
+                    }}
                   />
                 </div>
               </div>
