@@ -24,7 +24,7 @@ export default function PokemonCard({ pokemon, onSelect, isSelected }: PokemonCa
       type="button"
       onClick={() => onSelect(pokemon)}
       className={`
-        group relative w-full overflow-hidden rounded-3xl border text-left transition-all duration-300
+        relative w-full overflow-hidden rounded-3xl border text-left transition-all duration-300
         border-white/70 bg-white/75 shadow-glass backdrop-blur-md
         hover:-translate-y-1 hover:shadow-glass-lg dark:border-white/10 dark:bg-ink-900/55
         ${isSelected ? 'ring-2 ring-violet-500 ring-offset-2 ring-offset-transparent dark:ring-cyan-400 dark:ring-offset-ink-950' : ''}
