@@ -16,7 +16,13 @@ export default function PokemonDetail({ pokemon, onClose }: PokemonDetailProps) 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 backdrop-blur-md sm:p-4"
+      style={{
+        paddingLeft: 'max(0.75rem, env(safe-area-inset-left, 0px))',
+        paddingRight: 'max(0.75rem, env(safe-area-inset-right, 0px))',
+        paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))',
+        paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))',
+      }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="pokemon-detail-title"
@@ -28,7 +34,7 @@ export default function PokemonDetail({ pokemon, onClose }: PokemonDetailProps) 
         onClick={onClose}
       />
 
-      <div className="relative max-h-[92vh] w-full max-w-2xl overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/95 shadow-glass-lg backdrop-blur-2xl dark:border-white/10 dark:bg-ink-900/95">
+      <div className="relative max-h-[min(92dvh,100dvh)] w-full max-w-2xl overflow-hidden rounded-2xl border border-white/70 bg-white/95 shadow-glass-lg backdrop-blur-2xl sm:rounded-[1.75rem] dark:border-white/10 dark:bg-ink-900/95">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ink-100/80 bg-white/90 px-5 py-4 backdrop-blur dark:border-white/5 dark:bg-ink-900/90">
           <h2
             id="pokemon-detail-title"
@@ -45,7 +51,7 @@ export default function PokemonDetail({ pokemon, onClose }: PokemonDetailProps) 
           </button>
         </div>
 
-        <div className="max-h-[calc(92vh-4.5rem)] overflow-y-auto p-6 sm:p-8">
+        <div className="max-h-[calc(min(92dvh,100dvh)-4.5rem)] overflow-y-auto overscroll-contain p-4 sm:p-8">
           <div className="mb-8 flex flex-col gap-8 md:flex-row md:items-start">
             <div className="relative flex shrink-0 justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-violet-100/90 via-white to-cyan-100/80 p-8 dark:from-violet-950/50 dark:via-ink-900/40 dark:to-cyan-950/40 md:w-[240px]">
               <div

@@ -37,7 +37,7 @@ export default function FilterControls({ selectedType, onTypeChange }: FilterCon
         </div>
         <h3 className="font-semibold text-ink-800 dark:text-ink-100">Filter by type</h3>
       </div>
-      <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
+      <div className="touch-scroll-x -mx-1 flex flex-nowrap gap-2 overflow-x-auto pb-2 pt-0.5 sm:flex-wrap sm:justify-start sm:overflow-visible sm:pb-0">
         {POKEMON_TYPES.map((type) => {
           const selected = selectedType === type;
           return (
@@ -46,7 +46,7 @@ export default function FilterControls({ selectedType, onTypeChange }: FilterCon
               type="button"
               onClick={() => onTypeChange(type)}
               className={`
-                rounded-full px-3.5 py-1.5 text-xs font-semibold capitalize transition-all duration-200
+                shrink-0 rounded-full px-3.5 py-2 text-xs font-semibold capitalize transition-all duration-200 sm:py-1.5
                 ${TYPE_BADGE_CLASSES[type] || TYPE_BADGE_CLASSES.normal}
                 ${
                   selected

@@ -5,11 +5,6 @@ import { openImageFromDisk, savePngDataUrl } from '../lib/imageBridge';
 
 /** Only downscale if the longest edge exceeds this (avoids huge canvases / memory issues). */
 const MAX_CANVAS_DIMENSION = 8192;
-/**
- * Max block size for the preview (any orientation). Uses dvh so portrait phones
- * and notched layouts behave; subtracts space for chrome.
- */
-const PREVIEW_MAX_BLOCK = 'min(85dvh, calc(100dvh - 14rem))';
 const DEFAULT_STICKER_WIDTH = 140;
 
 export interface PlacedSticker {
@@ -135,7 +130,11 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
-        const maxW = DEFAULT_STICKER_WIDTH;
+        const cap = Math.min(
+          DEFAULT_STICKER_WIDTH,
+          Math.max(72, Math.round(canvasSize.w * 0.2))
+        );
+        const maxW = cap;
         const w = Math.min(maxW, img.naturalWidth);
         const h = (img.naturalHeight / img.naturalWidth) * w;
         const id = crypto.randomUUID();
@@ -285,10 +284,11 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
   };
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <div className="flex flex-col gap-8 lg:flex-row">
-        <aside className="w-full shrink-0 space-y-4 lg:w-80">
-          <div className="rounded-3xl border border-white/70 bg-white/75 p-5 shadow-glass backdrop-blur-xl dark:border-white/10 dark:bg-ink-900/60">
+    <div className="mx-auto w-full max-w-7xl">
+      {/* Canvas first on phones; sticker rail on the left from lg up */}
+      <div className="flex flex-col gap-5 sm:gap-6 lg:flex-row lg:gap-8">
+        <aside className="order-2 w-full shrink-0 space-y-4 lg:order-1 lg:w-80">
+          <div className="rounded-2xl border border-white/70 bg-white/75 p-4 shadow-glass backdrop-blur-xl sm:rounded-3xl sm:p-5 dark:border-white/10 dark:bg-ink-900/60">
             <h2 className="mb-2 flex items-center gap-2 font-display text-lg font-bold text-ink-900 dark:text-white">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white shadow-lg shadow-violet-500/30">
                 <Layers className="h-4 w-4" />
@@ -296,7 +296,10 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
               Stickers
             </h2>
             <p className="mb-4 text-sm leading-relaxed text-ink-600 dark:text-ink-400">
-              Import a photo first, then add Pokémon. Drag stickers on the canvas to position them.
+              <span className="hidden sm:inline">
+                Import a photo first, then add Pokémon. Drag stickers on the canvas to position them.
+              </span>
+              <span className="sm:hidden">Import a photo, then tap a Pokémon. Drag stickers to move.</span>
             </p>
             <input
               type="search"
@@ -304,9 +307,9 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
               value={stickerQuery}
               onChange={(e) => setStickerQuery(e.target.value)}
               disabled={!bgReady}
-              className="mb-4 w-full rounded-2xl border border-ink-200/80 bg-white/90 px-4 py-2.5 text-sm text-ink-900 shadow-inner placeholder:text-ink-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25 disabled:opacity-50 dark:border-white/10 dark:bg-ink-950/50 dark:text-ink-100"
+              className="mb-4 w-full rounded-2xl border border-ink-200/80 bg-white/90 px-4 py-3 text-base text-ink-900 shadow-inner placeholder:text-ink-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25 disabled:opacity-50 dark:border-white/10 dark:bg-ink-950/50 dark:text-ink-100"
             />
-            <div className="max-h-[min(420px,50vh)] space-y-1 overflow-y-auto pr-1">
+            <div className="max-h-[min(380px,42dvh)] space-y-1 overflow-y-auto overscroll-contain pr-1 sm:max-h-[min(420px,50vh)]">
               {loading && (
                 <div className="flex items-center justify-center py-10 text-violet-600 dark:text-cyan-400">
                   <Loader2 className="h-9 w-9 animate-spin" />
@@ -319,7 +322,7 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
                     type="button"
                     disabled={!bgReady}
                     onClick={() => addSticker(p)}
-                    className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition hover:bg-violet-50/90 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-ink-800/80"
+                    className="flex min-h-[48px] w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left transition active:bg-violet-100/90 hover:bg-violet-50/90 disabled:pointer-events-none disabled:opacity-40 dark:active:bg-ink-800 dark:hover:bg-ink-800/80"
                   >
                     <img
                       src={getStickerImageUrl(p)}
@@ -335,69 +338,70 @@ export default function PhotoEditor({ pokemon, loading }: PhotoEditorProps) {
           </div>
         </aside>
 
-        <div className="min-h-0 min-w-0 flex-1 space-y-5">
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="order-1 min-h-0 min-w-0 flex-1 space-y-4 sm:space-y-5 lg:order-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
             <button
               type="button"
               onClick={handleImport}
               disabled={importing}
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2.5 font-semibold text-white shadow-lg shadow-violet-500/30 transition hover:brightness-110 disabled:opacity-60"
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/30 transition hover:brightness-110 disabled:opacity-60 sm:min-h-0 sm:px-5 sm:py-2.5"
             >
               {importing ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <ImagePlus className="h-5 w-5" />
               )}
-              Import image
+              <span className="sm:hidden">Import</span>
+              <span className="hidden sm:inline">Import image</span>
             </button>
             <button
               type="button"
               onClick={handleExport}
               disabled={!bgReady || exporting}
-              className="inline-flex items-center gap-2 rounded-2xl border border-cyan-200/80 bg-gradient-to-r from-cyan-500 to-teal-600 px-5 py-2.5 font-semibold text-white shadow-lg shadow-cyan-500/25 transition hover:brightness-110 disabled:opacity-45"
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-cyan-200/80 bg-gradient-to-r from-cyan-500 to-teal-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/25 transition hover:brightness-110 disabled:opacity-45 sm:min-h-0 sm:px-5 sm:py-2.5"
             >
               {exporting ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <Download className="h-5 w-5" />
               )}
-              Export PNG
+              <span className="sm:hidden">Export</span>
+              <span className="hidden sm:inline">Export PNG</span>
             </button>
             {selectedId && (
               <button
                 type="button"
                 onClick={removeSelected}
-                className="inline-flex items-center gap-2 rounded-2xl border border-rose-300/80 bg-rose-50/90 px-4 py-2.5 font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-950/80"
+                className="col-span-2 inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-rose-300/80 bg-rose-50/90 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 dark:border-rose-500/30 dark:bg-rose-950/50 dark:text-rose-300 dark:hover:bg-rose-950/80 sm:col-span-1 sm:min-h-0 sm:py-2.5"
               >
                 <Trash2 className="h-5 w-5" />
-                Remove sticker
+                Remove
               </button>
             )}
           </div>
 
           <div
             className={`
-              flex w-full min-w-0 flex-1 flex-col rounded-3xl border border-white/60 bg-white/50 shadow-inner backdrop-blur dark:border-white/10 dark:bg-ink-950/40
-              ${canvasSize ? 'min-h-0 p-2 sm:p-3' : 'min-h-[min(320px,50vh)] items-center justify-center p-6'}
+              flex w-full min-w-0 flex-1 flex-col rounded-2xl border border-white/60 bg-white/50 shadow-inner backdrop-blur dark:border-white/10 dark:bg-ink-950/40 sm:rounded-3xl
+              ${canvasSize ? 'min-h-0 p-1.5 sm:p-3' : 'min-h-[min(280px,45dvh)] items-center justify-center p-4 sm:min-h-[min(320px,50vh)] sm:p-6'}
             `}
           >
             {!canvasSize && (
-              <p className="max-w-md text-balance px-4 text-center text-sm leading-relaxed text-ink-600 dark:text-ink-400">
-                Use <strong className="text-ink-800 dark:text-ink-200">Import image</strong> to load a photo.
-                In the desktop app, Electron opens a file dialog and reads the file in the main process.
+              <p className="max-w-md text-balance px-3 text-center text-sm leading-relaxed text-ink-600 dark:text-ink-400">
+                Tap <strong className="text-ink-800 dark:text-ink-200">Import image</strong> to load a photo.
+                <span className="hidden sm:inline">
+                  {' '}
+                  In the desktop app, Electron opens a file dialog and reads the file in the main process.
+                </span>
               </p>
             )}
             {canvasSize && (
-              <div
-                className="flex w-full min-h-0 flex-1 justify-center overflow-auto"
-                style={{ maxHeight: PREVIEW_MAX_BLOCK }}
-              >
+              <div className="photo-preview-max flex w-full min-h-0 flex-1 justify-center overflow-auto overscroll-contain">
                 {/* Sized with CSS “contain” math so portrait, landscape, square, and panoramic all fit. */}
                 <div
                   className="mx-auto w-full min-w-0 max-w-full"
                   style={
                     {
-                      '--preview-max': PREVIEW_MAX_BLOCK,
                       aspectRatio: `${canvasSize.w} / ${canvasSize.h}`,
                       maxHeight: 'var(--preview-max)',
                       width: `min(100%, calc(var(--preview-max) * ${canvasSize.w} / ${canvasSize.h}))`,

@@ -86,27 +86,27 @@ function App() {
           }}
         />
 
-        <div className="relative container mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <header className="mb-10 text-center">
-            <div className="relative mx-auto mb-8 max-w-3xl">
+        <div className="relative container mx-auto max-w-7xl px-4 py-6 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(0.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-10 lg:px-8">
+          <header className="mb-6 text-center sm:mb-10">
+            <div className="relative mx-auto mb-6 max-w-3xl px-12 sm:mb-8 sm:px-14">
               <button
                 type="button"
                 onClick={() => setDarkMode(!darkMode)}
                 aria-label="Toggle dark mode"
-                className="absolute -right-1 top-0 z-10 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/60 bg-white/70 text-ink-600 shadow-glass backdrop-blur-md transition hover:border-violet-300/80 hover:bg-white hover:text-violet-700 dark:border-white/10 dark:bg-ink-900/60 dark:text-ink-200 dark:hover:border-violet-500/40 dark:hover:bg-ink-800 dark:hover:text-violet-300"
+                className="absolute right-0 top-0 z-10 flex h-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-2xl border border-white/60 bg-white/70 text-ink-600 shadow-glass backdrop-blur-md transition hover:border-violet-300/80 hover:bg-white hover:text-violet-700 dark:border-white/10 dark:bg-ink-900/60 dark:text-ink-200 dark:hover:border-violet-500/40 dark:hover:bg-ink-800 dark:hover:text-violet-300"
               >
                 {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               </button>
 
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-violet-600/90 dark:text-cyan-300/90">
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-600/90 dark:text-cyan-300/90 sm:mb-3 sm:text-xs sm:tracking-[0.25em]">
                 Kanto archive
               </p>
-              <h1 className="font-display text-5xl font-extrabold tracking-tight text-ink-950 dark:text-white sm:text-6xl">
+              <h1 className="font-display text-4xl font-extrabold tracking-tight text-ink-950 dark:text-white sm:text-5xl md:text-6xl">
                 <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 bg-clip-text text-transparent dark:from-violet-300 dark:via-fuchsia-300 dark:to-cyan-300">
                   Pokédex
                 </span>
               </h1>
-              <p className="mx-auto mt-4 max-w-xl text-balance text-base text-ink-600 dark:text-ink-300 sm:text-lg">
+              <p className="mx-auto mt-3 max-w-xl text-balance text-sm text-ink-600 dark:text-ink-300 sm:mt-4 sm:text-base lg:text-lg">
                 {view === 'pokedex'
                   ? 'Browse all 151 originals — crisp art, types, and stats in one calm place.'
                   : 'Drop in a photo, layer official artwork stickers, and export a share-ready PNG.'}
@@ -114,13 +114,13 @@ function App() {
             </div>
 
             <nav
-              className="mx-auto inline-flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/70 bg-white/60 p-1.5 shadow-glass backdrop-blur-xl dark:border-white/10 dark:bg-ink-900/50"
+              className="mx-auto flex w-full max-w-md flex-wrap items-center justify-center gap-1.5 rounded-full border border-white/70 bg-white/60 p-1.5 shadow-glass backdrop-blur-xl dark:border-white/10 dark:bg-ink-900/50 sm:gap-2"
               aria-label="Main navigation"
             >
               <button
                 type="button"
                 onClick={() => setView('pokedex')}
-                className={`inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-300 ${
+                className={`inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-all duration-300 sm:min-h-0 sm:flex-initial sm:px-6 ${
                   view === 'pokedex'
                     ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/35'
                     : 'text-ink-600 hover:bg-white/80 hover:text-ink-900 dark:text-ink-300 dark:hover:bg-ink-800/80 dark:hover:text-white'
@@ -132,7 +132,7 @@ function App() {
               <button
                 type="button"
                 onClick={() => setView('studio')}
-                className={`inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-300 ${
+                className={`inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-all duration-300 sm:min-h-0 sm:flex-initial sm:px-6 ${
                   view === 'studio'
                     ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/35'
                     : 'text-ink-600 hover:bg-white/80 hover:text-ink-900 dark:text-ink-300 dark:hover:bg-ink-800/80 dark:hover:text-white'

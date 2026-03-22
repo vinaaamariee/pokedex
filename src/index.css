@@ -9,6 +9,8 @@
 
   body {
     @apply font-sans antialiased text-ink-900 dark:text-ink-100;
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
 
   ::selection {
@@ -19,5 +21,54 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Safe areas (notched phones, home indicator) */
+  .safe-pad {
+    padding-left: max(1rem, env(safe-area-inset-left, 0px));
+    padding-right: max(1rem, env(safe-area-inset-right, 0px));
+    padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  /*
+   * Photo Studio: shared cap for “contain” sizing (children use var(--preview-max)).
+   * Tighter subtract on phones so the canvas stays usable above the fold.
+   */
+  .photo-preview-max {
+    --preview-max: min(
+      76dvh,
+      calc(
+        100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 10.5rem
+      )
+    );
+    max-height: var(--preview-max);
+  }
+
+  @media (min-width: 640px) {
+    .photo-preview-max {
+      --preview-max: min(
+        85dvh,
+        calc(
+          100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 13rem
+        )
+      );
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .photo-preview-max {
+      --preview-max: min(
+        85dvh,
+        calc(
+          100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 14rem
+        )
+      );
+    }
+  }
+
+  .touch-scroll-x {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
   }
 }
